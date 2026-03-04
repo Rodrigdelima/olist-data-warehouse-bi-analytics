@@ -1,0 +1,20 @@
+DROP TABLE IF EXISTS dw.dim_calendario;
+
+CREATE TABLE dw.dim_calendario AS
+SELECT
+    datum AS data_sk,
+    datum AS data_completa,
+    EXTRACT(YEAR FROM datum) AS ano,
+    EXTRACT(MONTH FROM datum) AS mes,
+    TO_CHAR(datum, 'TMMonth') AS nome_mes,
+    EXTRACT(QUARTER FROM datum) AS trimestre,
+    EXTRACT(DOW FROM datum) AS dia_semana,
+    CASE WHEN EXTRACT(ISODOW FROM datum) IN (6, 7) THEN 'Fim de Semana' ELSE 'Dia Útil' END AS tipo_dia
+FROM generate_series(
+    '2016-01-01'::DATE,
+    '2019-12-31'::DATE,
+    '1 day'::INTERVAL
+) AS datum;
+
+-- Validação rápida
+SELECT * FROM dw.dim_calendario LIMIT 10;
