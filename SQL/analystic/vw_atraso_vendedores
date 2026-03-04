@@ -1,0 +1,50 @@
+CREATE OR REPLACE VIEW analytics.vw_atraso_vendedores AS
+
+SELECT
+
+seller_id,
+
+COUNT(*) AS total_pedidos,
+
+SUM(
+CASE
+WHEN pedido_atrasado = 1 THEN 1
+ELSE 0
+END
+) AS pedidos_atrasados,
+
+ROUND(
+SUM(
+CASE
+WHEN pedido_atrasado = 1 THEN 1
+ELSE 0
+END
+)::numeric
+/
+COUNT(*) * 100
+,2) AS taxa_atraso
+
+FROM dw.fato_pedidos
+
+GROUP BY seller_id
+
+ORDER BY taxa_atraso DESC;
+----------------------------------------------------------
+-- validação
+-- quantidade total de registros
+SELECT COUNT(*) FROM analytics.vw_atraso_vendedores;
+-- visualizando os dados    
+SELECT * FROM analytics.vw_atraso_vendedores
+LIMIT 10;
+-- verificando os vendedores com maior taxa de atraso
+SELECT seller_id, taxa_atraso
+FROM analytics.vw_atraso_vendedores
+ORDER BY taxa_atraso DESC
+LIMIT 10;
+--- verificando os vendedores com maior quantidade de pedidos atrasados
+SELECT
+seller_id,
+pedidos_atrasados
+FROM analytics.vw_atraso_vendedores
+ORDER BY pedidos_atrasados DESC
+LIMIT 10;

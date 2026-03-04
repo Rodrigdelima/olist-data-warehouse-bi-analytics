@@ -1,0 +1,61 @@
+CREATE OR REPLACE VIEW analytics.vw_impacto_atraso_avaliacao AS
+
+SELECT
+
+pedido_atrasado,
+
+COUNT(*) AS total_pedidos,
+
+ROUND(AVG(review_score)::numeric,2) AS avaliacao_media,
+
+ROUND(AVG(lead_time_dias)::numeric,2) AS lead_time_medio
+
+FROM dw.fato_pedidos
+
+GROUP BY pedido_atrasado;
+
+----------------------------------------------------------------
+-- validação
+-- quantidade total de registros
+SELECT COUNT(*) FROM analytics.vw_impacto_atraso_avaliacao;
+-- visualizando os dados
+SELECT * FROM analytics.vw_impacto_atraso_avaliacao;
+-- verificando a avaliação média para pedidos atrasados e não atrasados
+SELECT pedido_atrasado, avaliacao_media
+FROM analytics.vw_impacto_atraso_avaliacao;
+-- verificando o lead time médio para pedidos atrasados e não atrasados
+SELECT pedido_atrasado, lead_time_medio
+FROM analytics.vw_impacto_atraso_avaliacao;
+-- verificando a relação entre avaliação média e lead time médio para pedidos atrasados e não atrasados
+SELECT pedido_atrasado, avaliacao_media, lead_time_medio
+FROM analytics.vw_impacto_atraso_avaliacao;
+-- verificando a diferença na avaliação média entre pedidos atrasados e não atrasados
+SELECT
+pedido_atrasado,
+avaliacao_media,
+ROUND(avaliacao_media - LAG(avaliacao_media) OVER (ORDER BY pedido_atrasado),2) AS diferenca_avaliacao
+FROM analytics.vw_impacto_atraso_avaliacao;
+-- verificando a diferença no lead time médio entre pedidos atrasados e não atrasados
+SELECT
+pedido_atrasado,
+lead_time_medio,
+ROUND(lead_time_medio - LAG(lead_time_medio) OVER (ORDER BY pedido_atrasado),2) AS diferenca_lead_time
+FROM analytics.vw_impacto_atraso_avaliacao;
+-- verificando a relação entre avaliação média, lead time médio e atraso
+SELECT
+pedido_atrasado,
+avaliacao_media,
+lead_time_medio,
+ROUND(avaliacao_media - LAG(avaliacao_media) OVER (ORDER BY pedido_atrasado),2) AS diferenca_avaliacao,
+ROUND(lead_time_medio - LAG(lead_time_medio) OVER (ORDER BY pedido_atrasado),2) AS diferenca_lead_time
+FROM analytics.vw_impacto_atraso_avaliacao;
+-- verificando a relação entre avaliação média, lead time médio e atraso para pedidos atrasados
+SELECT
+pedido_atrasado,
+avaliacao_media,
+lead_time_medio,
+ROUND(avaliacao_media - LAG(avaliacao_media) OVER (ORDER BY pedido_atrasado),2) AS diferenca_avaliacao,
+ROUND(lead_time_medio - LAG(lead_time_medio) OVER (ORDER BY pedido_atrasado),2) AS diferenca_lead_time
+FROM analytics.vw_impacto_atraso_avaliacao
+WHERE pedido_atrasado = 1;
+

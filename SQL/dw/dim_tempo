@@ -1,0 +1,75 @@
+--------------------------------------------------------------------
+-- Camada: DW
+-- Tabela: dim_tempo
+-- Descrição: Dimensão de tempo baseada na data do pedido
+--------------------------------------------------------------------
+
+DROP TABLE IF EXISTS dw.dim_tempo;
+
+CREATE TABLE dw.dim_tempo AS
+SELECT DISTINCT
+
+DATE(order_purchase_timestamp) AS data,
+
+EXTRACT(YEAR FROM order_purchase_timestamp) AS ano,
+
+EXTRACT(MONTH FROM order_purchase_timestamp) AS mes,
+
+TO_CHAR(order_purchase_timestamp, 'FMMonth') AS nome_mes,
+
+EXTRACT(QUARTER FROM order_purchase_timestamp) AS trimestre,
+
+EXTRACT(DAY FROM order_purchase_timestamp) AS dia,
+
+EXTRACT(DOW FROM order_purchase_timestamp) AS dia_semana,
+
+CASE
+WHEN EXTRACT(DOW FROM order_purchase_timestamp) = 0 THEN 'Domingo'
+WHEN EXTRACT(DOW FROM order_purchase_timestamp) = 1 THEN 'Segunda'
+WHEN EXTRACT(DOW FROM order_purchase_timestamp) = 2 THEN 'Terça'
+WHEN EXTRACT(DOW FROM order_purchase_timestamp) = 3 THEN 'Quarta'
+WHEN EXTRACT(DOW FROM order_purchase_timestamp) = 4 THEN 'Quinta'
+WHEN EXTRACT(DOW FROM order_purchase_timestamp) = 5 THEN 'Sexta'
+WHEN EXTRACT(DOW FROM order_purchase_timestamp) = 6 THEN 'Sábado'
+END AS nome_dia_semana
+
+FROM raw.orders
+WHERE order_status = 'delivered';
+
+----------------------------------------------------------------
+-- validação
+-- quantidade total de registros
+SELECT COUNT(*) FROM dw.dim_tempo;
+-- quantidade de datas únicas
+SELECT COUNT(DISTINCT data) FROM dw.dim_tempo;
+-- quantidade de anos únicos
+SELECT COUNT(DISTINCT ano) FROM dw.dim_tempo;
+-- quantidade de meses únicos
+SELECT COUNT(DISTINCT mes) FROM dw.dim_tempo;
+-- quantidade de trimestres únicos
+SELECT COUNT(DISTINCT trimestre) FROM dw.dim_tempo;
+-- quantidade de dias únicos
+SELECT COUNT(DISTINCT dia) FROM dw.dim_tempo;
+-- quantidade de dias da semana únicos
+SELECT COUNT(DISTINCT dia_semana) FROM dw.dim_tempo;
+-- verificando a distribuição de pedidos por mês
+SELECT 
+mes,
+nome_mes,
+COUNT(*) AS total_pedidos
+FROM dw.dim_tempo
+GROUP BY mes, nome_mes
+ORDER BY mes;
+-- verificando a distribuição de pedidos por dia da semana
+SELECT
+dia_semana,
+nome_dia_semana,
+COUNT(*) AS total_pedidos
+FROM dw.dim_tempo
+GROUP BY dia_semana, nome_dia_semana
+ORDER BY dia_semana;
+-- verificando a distribuição de pedidos por trimestre
+SELECT trimestre, COUNT(*) AS total_pedidos
+FROM dw.dim_tempo
+GROUP BY trimestre
+ORDER BY trimestre;

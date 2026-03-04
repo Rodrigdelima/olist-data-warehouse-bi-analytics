@@ -1,0 +1,81 @@
+CREATE OR REPLACE VIEW analytics.vw_sazonalidade_atrasos AS
+
+SELECT
+
+t.ano,
+t.mes,
+t.nome_mes,
+
+COUNT(*) AS total_pedidos,
+
+SUM(
+CASE
+WHEN f.pedido_atrasado = 1 THEN 1
+ELSE 0
+END
+) AS pedidos_atrasados,
+
+ROUND(
+SUM(
+CASE
+WHEN f.pedido_atrasado = 1 THEN 1
+ELSE 0
+END
+)::numeric
+/
+COUNT(*) * 100
+,2) AS taxa_atraso
+
+FROM dw.fato_pedidos f
+
+LEFT JOIN raw.orders o
+ON f.order_id = o.order_id
+
+LEFT JOIN dw.dim_tempo t
+ON DATE(o.order_purchase_timestamp) = t.data
+
+GROUP BY
+t.ano,
+t.mes,
+t.nome_mes
+
+ORDER BY
+t.ano,
+t.mes;
+----------------------------------------------------------------
+-- validação
+-- quantidade total de registros
+
+SELECT COUNT(*) FROM analytics.vw_sazonalidade_atrasos;
+-- visualizando os dados        
+
+SELECT *
+FROM analytics.vw_sazonalidade_atrasos
+LIMIT 10;
+-- verificando a taxa de atraso por mês e ano   
+SELECT ano, nome_mes, taxa_atraso
+FROM analytics.vw_sazonalidade_atrasos
+ORDER BY ano, mes;
+-- verificando os meses com maior quantidade de pedidos atrasados
+SELECT *
+FROM analytics.vw_sazonalidade_atrasos
+ORDER BY total_pedidos DESC;
+-- verificando a relação entre taxa de atraso e total de pedidos por mês e ano
+SELECT ano, nome_mes, total_pedidos, taxa_atraso
+FROM analytics.vw_sazonalidade_atrasos
+ORDER BY ano, mes;
+-- verificando a relação entre taxa de atraso e total de pedidos por mês e ano para os meses com maior quantidade de pedidos atrasados
+SELECT ano, nome_mes, total_pedidos, taxa_atraso
+FROM analytics.vw_sazonalidade_atrasos
+WHERE total_pedidos > 1000
+ORDER BY ano, mes;
+-- verificando a relação entre taxa de atraso e total de pedidos por mês e ano para os meses com maior taxa de atraso
+SELECT ano, nome_mes, total_pedidos, taxa_atraso
+FROM analytics.vw_sazonalidade_atrasos
+WHERE taxa_atraso > 10
+ORDER BY ano, mes;
+-- verificando a relação entre taxa de atraso e total de pedidos por mês e ano para os meses com menor taxa de atraso
+SELECT ano, nome_mes, total_pedidos, taxa_atraso
+FROM analytics.vw_sazonalidade_atrasos
+WHERE taxa_atraso < 5
+ORDER BY ano, mes;
