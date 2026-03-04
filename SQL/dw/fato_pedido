@@ -1,0 +1,63 @@
+--------------------------------------------------------------------
+-- Camada: DW
+-- Tabela: fato_pedidos
+-- Descrição: Fato consolidado com métricas logísticas e financeiras
+--------------------------------------------------------------------
+
+DROP TABLE IF EXISTS dw.fato_pedidos;
+
+CREATE TABLE dw.fato_pedidos AS
+SELECT
+    s.order_id,
+    s.customer_id,
+    oi.seller_id,
+
+    -- Receita
+    SUM(oi.price) AS receita_total,
+    SUM(oi.freight_value) AS frete_total,
+
+    -- Métricas logísticas
+    s.lead_time_dias,
+    s.pedido_atrasado,
+    s.review_score
+
+FROM staging.stg_orders s
+LEFT JOIN raw.order_items oi
+    ON s.order_id = oi.order_id
+
+GROUP BY
+    s.order_id,
+    s.customer_id,
+    oi.seller_id,
+    s.lead_time_dias,
+    s.pedido_atrasado,
+    s.review_score;
+
+----------------------------------------------------------------
+-- validação
+-- quantidade total de registros
+SELECT COUNT(*) FROM dw.fato_pedidos;
+-- quantidade de pedidos únicos
+SELECT COUNT(DISTINCT order_id) FROM dw.fato_pedidos;
+-- quantidade de clientes únicos
+SELECT COUNT(DISTINCT customer_id) FROM dw.fato_pedidos;
+-- quantidade de vendedores únicos
+SELECT COUNT(DISTINCT seller_id) FROM dw.fato_pedidos;
+-- média da receita total por pedido
+SELECT AVG(receita_total) AS media_receita_pedido FROM dw.fato_pedidos
+-- média do frete total por pedido
+SELECT AVG(frete_total) AS media_frete_pedido FROM dw.fato_pedidos
+-- média do lead time em dias
+SELECT AVG(lead_time_dias) AS media_lead_time FROM dw.fato_pedidos;
+-- distribuição das avaliações dos clientes
+SELECT review_score, COUNT(*) AS total_reviews FROM dw.fato_pedidos GROUP BY review_score ORDER BY review_score;
+-- análise de correlação entre atraso e avaliação dos clientes
+SELECT
+    pedido_atrasado,
+    COUNT(*) AS total_pedidos,
+    AVG(lead_time_dias) AS media_lead_time,
+    AVG(review_score) AS media_nota
+FROM dw.fato_pedidos
+GROUP BY pedido_atrasado
+ORDER BY pedido_atrasado;
+

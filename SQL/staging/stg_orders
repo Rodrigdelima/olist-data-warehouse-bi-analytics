@@ -1,0 +1,64 @@
+-----------------------------------------------------------------
+-- Camada: STAGING
+-- Tabela: stg_orders
+-- Descrição: Preparação da tabela orders com métricas logísticas e avaliação de clientes     
+-----------------------------------------------------------------
+
+
+DROP TABLE IF EXISTS staging.stg_orders;
+
+CREATE TABLE staging.stg_orders AS
+SELECT
+    o.order_id,
+    o.customer_id,
+    o.order_status,
+    o.order_purchase_timestamp,
+    o.order_delivered_customer_date,
+    o.order_estimated_delivery_date,
+
+    -- Lead time em dias
+    DATE_PART(
+        'day',
+        o.order_delivered_customer_date - o.order_purchase_timestamp
+    ) AS lead_time_dias,
+
+    -- Flag de atraso
+    CASE
+        WHEN o.order_delivered_customer_date > o.order_estimated_delivery_date
+        THEN 1
+        ELSE 0
+    END AS pedido_atrasado,
+
+    r.review_score
+
+FROM raw.orders o
+LEFT JOIN raw.order_reviews r
+    ON o.order_id = r.order_id
+WHERE o.order_status = 'delivered';
+
+----------------------------------------------------------------
+-- validação
+
+-- quantidade total de registros
+SELECT COUNT(*) FROM staging.stg_orders;
+-- quantidade de pedidos únicos
+SELECT COUNT(DISTINCT order_id) FROM staging.stg_orders;
+-- quantidade de clientes únicos
+SELECT COUNT(DISTINCT customer_id) FROM staging.stg_orders;
+-- quantidade de pedidos atrasados
+SELECT COUNT(*) FROM staging.stg_orders WHERE pedido_atrasado = 1;
+-- média do lead time em dias
+SELECT AVG(lead_time_dias) AS media_lead_time FROM staging.stg_orders;
+-- distribuição das avaliações dos clientes
+SELECT review_score, COUNT(*) AS total_reviews FROM staging.stg_orders GROUP BY review_score ORDER BY review_score;
+-- análise de correlação entre atraso e avaliação dos clientes
+SELECT
+    pedido_atrasado,
+    COUNT(*) AS total_pedidos,
+    AVG(lead_time_dias) AS media_lead_time,
+    AVG(review_score) AS media_nota
+FROM staging.stg_orders
+GROUP BY pedido_atrasado;
+
+--A análise identificou que pedidos atrasados apresentam redução de aproximadamente 40% na avaliação média do cliente (4,29 vs 2,56),evidenciando forte correlação entre SLA logístico e experiência do consumidor. 
+
