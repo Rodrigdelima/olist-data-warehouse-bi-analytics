@@ -4,34 +4,39 @@
 -- Descrição: Fato consolidado com métricas logísticas e financeiras
 --------------------------------------------------------------------
 
-DROP TABLE IF EXISTS dw.fato_pedidos;
+-- Remove a fato e as views que dependem dela de forma segura
+DROP TABLE IF EXISTS dw.fato_pedidos CASCADE;
 
+-- Cria a fato completa com todas as métricas do projeto Olist
 CREATE TABLE dw.fato_pedidos AS
-SELECT
-    s.order_id,
-    s.customer_id,
+SELECT 
+    o.order_id,
+    o.customer_id,
+    oi.product_id,
     oi.seller_id,
+    -- Chave de ligação para a dim_calendario no Power BI
+    o.order_purchase_timestamp::DATE AS data_sk, 
+    oi.price AS venda_bruta,
+    oi.freight_value AS frete_total,
+    -- Métricas de Logística (Lead Time)
+    EXTRACT(DAY FROM (o.order_delivered_customer_date - o.order_purchase_timestamp)) AS lead_time_dias,
+    -- Flag de Atraso (Necessário para vw_atraso_vendedores e vw_sazonalidade_atrasos)
+    CASE 
+        WHEN o.order_delivered_customer_date > o.order_estimated_delivery_date THEN 1 
+        ELSE 0 
+    END AS pedido_atrasado,
+    -- Nota da Avaliação (Necessário para vw_impacto_atraso_avaliacao)
+    r.review_score
+FROM raw.orders o
+JOIN raw.order_items oi ON o.order_id = oi.order_id
+LEFT JOIN raw.order_reviews r ON o.order_id = r.order_id
+WHERE o.order_status = 'delivered';
 
-    -- Receita
-    SUM(oi.price) AS receita_total,
-    SUM(oi.freight_value) AS frete_total,
+-- Validação final
+SELECT * FROM dw.fato_pedidos LIMIT 5;
 
-    -- Métricas logísticas
-    s.lead_time_dias,
-    s.pedido_atrasado,
-    s.review_score
-
-FROM staging.stg_orders s
-LEFT JOIN raw.order_items oi
-    ON s.order_id = oi.order_id
-
-GROUP BY
-    s.order_id,
-    s.customer_id,
-    oi.seller_id,
-    s.lead_time_dias,
-    s.pedido_atrasado,
-    s.review_score;
+-- 3. Validação simples para garantir que a coluna data_sk está lá
+SELECT * FROM dw.fato_pedidos LIMIT 5;
 
 ----------------------------------------------------------------
 -- validação
