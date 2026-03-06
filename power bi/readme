@@ -1,10 +1,10 @@
-## 📊 Dashboard de BI – Olist E-commerce
+Dashboard de BI – Olist E-commerce
 
 Este dashboard foi desenvolvido em **Power BI** a partir de um **Data Warehouse modelado em SQL**, com o objetivo de analisar a performance logística e comercial do marketplace brasileiro **Olist**.
 
 A análise permite acompanhar indicadores importantes do negócio e identificar padrões de vendas, atrasos logísticos e distribuição geográfica dos pedidos.
 
-### 🎯 Perguntas que o dashboard responde
+Perguntas que o dashboard responde
 
 * Qual o volume total de vendas e pedidos?
 * Como está o desempenho logístico das entregas?
@@ -12,7 +12,7 @@ A análise permite acompanhar indicadores importantes do negócio e identificar 
 * Quais categorias de produtos geram mais receita?
 * Em quais estados estão concentradas as vendas?
 
-### 📈 Indicadores analisados
+Indicadores analisados
 
 * Receita Total
 * Total de Pedidos
@@ -20,7 +20,7 @@ A análise permite acompanhar indicadores importantes do negócio e identificar 
 * Taxa de Atraso
 * Custo Total de Frete
 
-### 📊 Visualizações
+Visualizações
 
 O dashboard inclui gráficos de:
 
@@ -30,7 +30,7 @@ O dashboard inclui gráficos de:
 * Categorias de produtos com maior faturamento
 * Distribuição geográfica das vendas no Brasil
 
-### 🖱️ Interatividade
+Interatividade
 
 As imagens apresentadas no repositório são **prints do dashboard**, porém o relatório no Power BI é **interativo e responsivo**, permitindo exploração dos dados através de filtros e informações adicionais exibidas ao passar o mouse sobre os gráficos.
 
